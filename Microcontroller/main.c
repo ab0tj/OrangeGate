@@ -22,7 +22,7 @@ struct Ptt
 	uint8_t state;
 };
 
-enum SpiState { Spi_Idle, Spi_Wait_Byte, Spi_Wait_Word1, Spi_Wait_Word2, Spi_Wait_Adc };
+enum SpiState { Spi_Idle, Spi_Wait_Byte, Spi_Wait_Word1, Spi_Wait_Word2 };
 
 enum SpiCommand
 {
@@ -50,7 +50,6 @@ volatile struct Ptt ptt[3];
 volatile uint8_t spiDone, spiIn, spiOut;
 enum SpiCommand currentSpiCommand;
 enum SpiState spiState;
-
 const uint16_t version = 1;
 
 void handleSpi();
@@ -62,24 +61,24 @@ int main(void)
 	DDRB = 1<<DDB0 | 1<<DDB2;		// PTT1 and PTT2 are outputs
 	
 	// Set up SPI
-	USICR = (1<<USIOIE) | (1<<USIWM0) | (1<<USICS1); // SPI mode 0, overflow interrupt enabled
+	USICR = 1<<USISIE | 1<<USIOIE | 1<<USIWM0 | 1<<USICS1; // SPI mode 0, start and overflow interrupts enabled
 	USISR = 1<<USIOIF;
-	spiIn = spiOut = 0xFF;
+	spiIn = spiOut = Cmd_Idle;
 	currentSpiCommand = Cmd_Idle;
 	spiState = Spi_Idle;
 	
-	// Set up timer
-	PRR = 1<<PRTIM0;	// Not using Timer0
-	TCCR1B = 1<<WGM12 | 1<<CS11 | 1<<CS10;	// CTC mode, /64 clock
+	// Set up timers
+	TCCR0B = 1<<CS01 | 1<<CS00;				// Timer0 normal mode, /64 clock
+	TCCR1B = 1<<WGM12 | 1<<CS11 | 1<<CS10;	// Timer1 CTC mode, /64 clock
 	OCR1A = (F_CPU / 64) - 1;				// 1Hz rate
-	TIMSK1 = 1<<OCIE1A;
+	TIMSK1 = 1<<OCIE1A;						// Timer1 compare match interrupt enabled
 	
 	// Set up ADC
 	DIDR0 = 1<<ADC1D | 1<<ADC0D;	// Disable digital inputs on ADC0 and ADC1 pins
 	ADMUX = 1<<REFS1;				// Internal 1.1V reference
 	ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADPS1 | 1<<ADPS0;	// Enable ADC, start conversion (to initialize), /8 clock prescaler (125kHz)
 	
-	// Set up interrupts
+	// Set up pin change interrupts
 	GIMSK = 1<<PCIE1 | 1<<PCIE0;
 	PCMSK0 = 1 << PCINT3 | 1<<PCINT7;
 	PCMSK1 = 1<<PCINT9;
@@ -88,8 +87,8 @@ int main(void)
     while (1) 
     {
 		// Put the CPU to sleep and wait for interrupts
-		set_sleep_mode(SLEEP_MODE_IDLE);
-		sleep_mode();
+		//set_sleep_mode(SLEEP_MODE_IDLE);
+		//sleep_mode();
 		
 		// Handle any pending SPI events
 		if (spiDone != 0)
@@ -156,14 +155,19 @@ void clearPtt(uint8_t p)
 	ptt[p].state &= ~PTT_STATE_ACTIVE;
 }
 
+void spiWrite(uint8_t b)
+{
+	while ((USISR & 0x0F) != 0);	// Wait if shift is in progress
+	USIDR = b;
+}
+
 void startAdc(uint8_t adc)
 {
 	ADMUX = (1<<REFS1) | adc;	// Set ADC mux
 	ADCSRA |= 1<<ADSC;			// Start a conversion
 	while (ADCSRA & 1<<ADSC);	// Wait for conversion to complete
-	USIDR = ADCL;				// Send low byte
+	spiWrite(ADCL);				// Send low byte
 	spiOut = ADCH;				// Queue the high byte
-	spiState = Spi_Idle;
 }
 
 void handleSpi()
@@ -183,12 +187,12 @@ void handleSpi()
 					break;
 					
 				case Cmd_GetVersion:	// Return firmware version
-					USIDR = version;
+					spiWrite(version);
 					spiOut = version >> 8;
 					break;
 					
 				case Cmd_Ping:			// Send a magic string to show we're alive
-					USIDR = 0x55;
+					spiWrite(0x55);
 					spiOut = 0xAA;
 					break;
 					
@@ -202,7 +206,7 @@ void handleSpi()
 				case Cmd_StatusPtt0:	// Send PTT status
 				case Cmd_StatusPtt1:
 				case Cmd_StatusPtt2:
-					USIDR = ptt[spiIn & 0x0F].state;
+					spiWrite(ptt[spiIn & 0x0F].state);
 					break;
 
 				case Cmd_SetPtt0:		// Activate PTT
@@ -220,8 +224,6 @@ void handleSpi()
 				case Cmd_GetAdc0:		// Get ADC Value
 				case Cmd_GetAdc1:
 					startAdc(spiIn & 0x0F);
-					currentSpiCommand = spiIn;
-					spiState = Spi_Wait_Adc;
 					break;
 			}
 			break;
@@ -315,11 +317,28 @@ ISR(PCINT1_vect)
 	lastPINB = thisPINB;
 }
 
-ISR(USI_OVF_vect)
+ISR(TIM0_OVF_vect)			// SPI byte timed out
 {
+	TIMSK0 = 0;				// Disable timer interrupt
+	USISR = 0;				// Reset USR counter
+	USISR = 1<<USISIF;		// Clear start condition interrupt flag
+	USICR |= 1<<USISIE;		// Enable USI start interrupt
+}
+
+ISR(USI_STR_vect)			// USI start condition
+{
+	USICR &= ~(1<<USISIE);	// Disable start condition interrupt
+	TCNT0 = 0;				// Reset timer0 count
+	TIFR0 = 1<<TOV0;		// Clear timer0 interrupt flag
+	TIMSK0 = 1<<TOIE0;		// Enable timer0 overflow interrupt
+}
+
+ISR(USI_OVF_vect)			// USI counter overflow
+{
+	TCNT0 = 0;				// Reset SPI timeout
 	spiIn = USIDR;
 	USIDR = spiOut;
 	spiOut = Cmd_Idle;
 	spiDone = 1;
-	USISR |= 1<<USIOIF;
+	USISR = 1<<USIOIF;
 }
