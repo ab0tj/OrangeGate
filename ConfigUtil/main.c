@@ -74,7 +74,7 @@ void initPtt()
     }
 }
 
-float read_adc(unsigned char a)
+float read_adc(unsigned char a, int scale)
 {
     unsigned int val;
 
@@ -91,7 +91,8 @@ float read_adc(unsigned char a)
         val = spiTrxWord(0xFFFF);
     } while (val > 0x3ff);      // Filter invalid results
 
-    return val * config.adc[a].scale;
+    if (scale) return val * config.adc[a].scale;
+    return val;
 }
 
 float read_temp()
@@ -119,10 +120,8 @@ float read_temp()
 
     if (config.tempUnit == 'F') val = (val * (9.0 / 5.0)) + 32000;
     else if (config.tempUnit == 'K') val += 273150;
-    val /= 1000;
-    if (config.tempPrecision == 0) val = round(val);
 
-    return val;
+    return val / 1000;
 }
 
 void get_ptt_status(unsigned char p)
@@ -163,9 +162,15 @@ void doBeacon()
         {
             switch (text[i+1])
             {
-                case 'a':   // ADC value
+                case 'a':   // Scaled ADC value
                     temp[0] = text[i+2];
-                    printf("%.2fV", read_adc(atoi(temp)));
+                    printf("%.2f", read_adc(atoi(temp), 1));
+                    i += 3;
+                    break;
+
+                case 'r':   // Raw ADC value
+                    temp[0] = text[i+2];
+                    printf("%.0f", read_adc(atoi(temp), 0));
                     i += 3;
                     break;
 
@@ -200,6 +205,7 @@ void show_help(const char* cmdline)
     printf("  -c\t\tSpecify config file (default is /etc/orangegate.conf)\n");
     printf("  -d\t\tDebug: Print SPI transfers\n");
     printf("  -i\t\tInitialize the MCU\n");
+    printf("  -r\t\tRaw ADC output\n");
     printf("  -s <ptt>\tPrint PTT status (0-2)\n");
     printf("  -t\t\tPrint temperature\n");
     printf("  -v\t\tBe verbose\n");
@@ -208,7 +214,7 @@ void show_help(const char* cmdline)
 
 int main(int argc, char **argv)
 {
-    int opt, do_init = 0, adc = -1, stat = -1, printTemp = 0, do_beacon = 0;
+    int opt, do_init = 0, adc = -1, stat = -1, printTemp = 0, do_beacon = 0, scaled = 1;
     unsigned int temp;
 
     if (argc == 1)
@@ -216,7 +222,7 @@ int main(int argc, char **argv)
         show_help(argv[0]);
         return 1;
     }
-    while((opt = getopt(argc, argv, ":vidbtc:s:a:")) != -1)
+    while((opt = getopt(argc, argv, ":vidbtrc:s:a:")) != -1)
     {
         switch(opt)
         {
@@ -251,6 +257,10 @@ int main(int argc, char **argv)
 
             case 'c':   // Use a different config file
                 configFile = optarg;
+                break;
+
+            case 'r':   // Raw ADC output
+                scaled = 0;
                 break;
 
             default:
@@ -307,7 +317,7 @@ int main(int argc, char **argv)
     usleep(100000); // Let MCU's SPI counter reset
     if (do_beacon) doBeacon();
     if (stat != -1) get_ptt_status(stat);
-    if (adc != -1) printf("%.2fV\n", read_adc(adc));
+    if (adc != -1) printf("%.*f\n", scaled ? 2 : 0, read_adc(adc, scaled));
     if (printTemp) printf("%.*f%c\n", config.tempPrecision, read_temp(), config.tempUnit);
     return 0;
 }
