@@ -145,7 +145,6 @@ void get_ptt_status(unsigned char p)
 void doBeacon()
 {
     char* text = config.beaconText;
-    char* temp = (char*)calloc(1, 2);
     int textSz = strlen(text);
 
     char* zulu = (char*)calloc(1, 8);
@@ -163,14 +162,12 @@ void doBeacon()
             switch (text[i+1])
             {
                 case 'a':   // Scaled ADC value
-                    temp[0] = text[i+2];
-                    printf("%.2f", read_adc(atoi(temp), 1));
+                    printf("%.2f", read_adc(text[i+2] - '0', 1));
                     i += 3;
                     break;
 
                 case 'r':   // Raw ADC value
-                    temp[0] = text[i+2];
-                    printf("%.0f", read_adc(atoi(temp), 0));
+                    printf("%.0f", read_adc(text[i+2] - '0', 0));
                     i += 3;
                     break;
 
@@ -194,7 +191,6 @@ void doBeacon()
     putchar('\n');
 
     free(zulu);
-    free(temp);
 }
 
 void show_help(const char* cmdline)
