@@ -142,6 +142,12 @@ void get_ptt_status(unsigned char p)
     printf("PTT%d has %stimed out\n", p, val & 0x04 ? "" : "not ");
 }
 
+float fround(float f, uint digits)
+{
+    if (digits == 0) return round(f);
+    return float(int(f * (10 * digits) + 0.5)) / (digits * 10);
+}
+
 void doBeacon()
 {
     char* text = config.beaconText;
@@ -159,20 +165,21 @@ void doBeacon()
     {
         if (text[i] == '{')
         {
+            int p = text[i+2] - '0';
             switch (text[i+1])
             {
                 case 'a':   // Scaled ADC value
-                    printf("%.2f", read_adc(text[i+2] - '0', 1));
+                    printf("%f", fround(read_adc(p, 1), config.adc[p].precision));
                     i += 3;
                     break;
 
                 case 'r':   // Raw ADC value
-                    printf("%.0f", read_adc(text[i+2] - '0', 0));
+                    printf("%.0f", read_adc(p, 0));
                     i += 3;
                     break;
 
                 case 't':   // Temperature value
-                    printf("%.*f%c", config.tempPrecision, read_temp(), config.tempUnit);
+                    printf("%f%c", fround(read_temp(), config.tempPrecision), config.tempUnit);
                     i += 2;
                     break;
 
@@ -313,7 +320,7 @@ int main(int argc, char **argv)
     usleep(100000); // Let MCU's SPI counter reset
     if (do_beacon) doBeacon();
     if (stat != -1) get_ptt_status(stat);
-    if (adc != -1) printf("%.*f\n", scaled ? 2 : 0, read_adc(adc, scaled));
-    if (printTemp) printf("%.*f%c\n", config.tempPrecision, read_temp(), config.tempUnit);
+    if (adc != -1) printf("%g\n", scaled ? fround(read_adc(adc, 1), config.adc[adc].precision) : read_adc(adc, 0));
+    if (printTemp) printf("%g%c\n", fround(read_temp(), config.tempPrecision), config.tempUnit);
     return 0;
 }

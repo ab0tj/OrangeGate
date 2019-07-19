@@ -9,6 +9,7 @@ typedef struct
 typedef struct
 {
     float scale;
+    uint precision;
 } AdcStruct;
 
 typedef struct
@@ -18,7 +19,7 @@ typedef struct
     AdcStruct adc[2];
     char tempUnit;
     char* tempFile;
-    int tempPrecision;
+    uint tempPrecision;
 } ConfigStruct;
 
 extern char* configFile;

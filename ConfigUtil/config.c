@@ -42,9 +42,17 @@ int configHandler(void* user, const char* section, const char* name, const char*
     {
         pconfig->adc[0].scale = atof(value);
     }
+    else if (MATCH("adc0", "precision"))
+    {
+        pconfig->adc[0].precision = atoi(value);
+    }
     else if (MATCH("adc1", "scale"))
     {
         pconfig->adc[1].scale = atof(value);
+    }
+    else if (MATCH("adc1", "precision"))
+    {
+        pconfig->adc[1].precision = atoi(value);
     }
     else if (MATCH("temp", "unit"))
     {
