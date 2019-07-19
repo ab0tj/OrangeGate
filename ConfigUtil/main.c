@@ -169,7 +169,7 @@ void doBeacon()
             switch (text[i+1])
             {
                 case 'a':   // Scaled ADC value
-                    printf("%f", fround(read_adc(p, 1), config.adc[p].precision));
+                    printf("%g", fround(read_adc(p, 1), config.adc[p].precision));
                     i += 3;
                     break;
 
@@ -179,7 +179,7 @@ void doBeacon()
                     break;
 
                 case 't':   // Temperature value
-                    printf("%f%c", fround(read_temp(), config.tempPrecision), config.tempUnit);
+                    printf("%g%c", fround(read_temp(), config.tempPrecision), config.tempUnit);
                     i += 2;
                     break;
 
