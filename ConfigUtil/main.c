@@ -163,33 +163,33 @@ void doBeacon()
 
     for (int i=0; i<textSz; i++)
     {
-        if (text[i] == '{')
+        if (text[i] == '|') continue;   // APRS spec says comments cannot contain ~ or |
+        if (text[i] == '~')
         {
             int p = text[i+2] - '0';
             switch (text[i+1])
             {
                 case 'a':   // Scaled ADC value
                     printf("%g", fround(read_adc(p, 1), config.adc[p].precision));
-                    i += 3;
+                    i += 2;
                     break;
 
                 case 'r':   // Raw ADC value
                     printf("%.0f", read_adc(p, 0));
-                    i += 3;
+                    i += 2;
                     break;
 
                 case 't':   // Temperature value
                     printf("%g%c", fround(read_temp(), config.tempPrecision), config.tempUnit);
-                    i += 2;
+                    i += 1;
                     break;
 
                 case 'z':   // Timestamp
                     printf(zulu);
-                    i += 2;
+                    i += 1;
                     break;
 
                 default:
-                    putchar('{');
                     break;
             }
         }
