@@ -35,8 +35,8 @@ int configHandler(void* user, const char* section, const char* name, const char*
     }
     else if (MATCH("beacon", "text"))
     {
-        pconfig->beaconText = (char*)malloc(strlen(value) + 1);
-        strcpy(pconfig->beaconText, value);
+        pconfig->beacons[0].text = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->beacons[0].text, value);
     }
     else if (MATCH("adc0", "scale"))
     {
@@ -46,6 +46,10 @@ int configHandler(void* user, const char* section, const char* name, const char*
     {
         pconfig->adc[0].precision = atoi(value);
     }
+    else if (MATCH("adc0", "offset"))
+    {
+        pconfig->adc[0].offset = atoi(value);
+    }
     else if (MATCH("adc1", "scale"))
     {
         pconfig->adc[1].scale = atof(value);
@@ -53,6 +57,10 @@ int configHandler(void* user, const char* section, const char* name, const char*
     else if (MATCH("adc1", "precision"))
     {
         pconfig->adc[1].precision = atoi(value);
+    }
+    else if (MATCH("adc1", "offset"))
+    {
+        pconfig->adc[1].offset = atoi(value);
     }
     else if (MATCH("temp", "unit"))
     {

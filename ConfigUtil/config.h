@@ -1,4 +1,4 @@
-const float version = 1.00;
+const float version = 1.02;
 
 typedef struct
 {
@@ -9,17 +9,25 @@ typedef struct
 typedef struct
 {
     float scale;
-    uint precision;
+    float offset;
+    unsigned int precision;
 } AdcStruct;
 
 typedef struct
 {
+    char* text;
+    unsigned int priority;
+    unsigned int frequency;
+} BeaconStruct;
+
+typedef struct
+{
     PttConfig ptt[3];
-    char* beaconText;
+    BeaconStruct beacons[8];
     AdcStruct adc[2];
     char tempUnit;
     char* tempFile;
-    uint tempPrecision;
+    unsigned int tempPrecision;
 } ConfigStruct;
 
 extern char* configFile;

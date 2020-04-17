@@ -1,204 +1,16 @@
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
-#include <math.h>
-#include <time.h>
-#include <wiringPi.h>
 #include "ini.h"
 #include "config.h"
-
-#define MOSI    12
-#define MISO    13
-#define CLK     14
-#define RST     4
+#include "mcu.h"
+#include "beacon.h"
+#include "util.h"
 
 int verbose = 0, debug = 0;
 char* configFile;
 ConfigStruct config;
-
-unsigned char spiTrxByte(unsigned char b)
-{
-    /* Send a byte via SPI while reading another in.
-    Using bitbang here as the spidev interface doesn't
-    seem to work well for programming the MCU. */
-
-    unsigned char c = 0;
-
-    if (debug) printf("SPI out:%02X", b);
-    for (int i=0; i<8; i++)
-    {
-        digitalWrite(MOSI, b & 0x80);
-        b <<= 1;
-        c <<= 1;
-        usleep(1);
-        c |= digitalRead(MISO);
-        digitalWrite(CLK, 1);
-        usleep(1);
-        digitalWrite(CLK, 0);
-    }
-
-    if (debug) printf(" in:%02X\n", c);
-    usleep(1);
-    return c;
-}
-
-unsigned int spiTrxWord(unsigned int w)
-{
-    /* Read a 16 bit word from SPI */
-    unsigned int val = spiTrxByte(w);
-    val |= (unsigned int)spiTrxByte(w>>8) << 8;
-    return val;
-}
-
-void resetMcu()
-{
-    digitalWrite(RST, 0);     // Reset the MCU
-    usleep(10000);
-    digitalWrite(RST, 1);     // Release reset
-    usleep(100000);         // Give the MCU some time to be ready
-}
-
-void initPtt()
-{
-    for (int i=0; i<3; i++)
-    {
-        if (config.ptt[i].enabled)
-        {
-            spiTrxByte(0x10 | i);
-            spiTrxWord(config.ptt[i].timeout);
-            usleep(100000);
-            if (verbose) printf("Initialized PTT%d\n", i);
-        }
-    }
-}
-
-float read_adc(unsigned char a, int scale)
-{
-    unsigned int val;
-
-    if (a > 1)
-    {
-        fprintf(stderr, "ADC can only be 0 or 1.\n");
-        exit(1);
-    }
-
-    do
-    {
-        spiTrxByte(0x80 | a);   // Start ADC conversion
-        usleep(250);            // Allow time for the conversion
-        val = spiTrxWord(0xFFFF);
-    } while (val > 0x3ff);      // Filter invalid results
-
-    if (scale) return val * config.adc[a].scale;
-    return val;
-}
-
-float read_temp()
-{
-    float val;
-    long size;
-    char* buff;
-    FILE *fp = fopen(config.tempFile, "r");
-    if (fp == NULL)
-    {
-        fprintf(stderr, "Error opening temperature file: %d\n", errno);
-        exit(1);
-    }
-
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    rewind(fp);
-
-    buff = (char*)calloc(1, size + 1);
-    fread(buff, size, 1, fp);
-    fclose(fp);
-
-    val = atoi(buff);
-    free(buff);
-
-    if (config.tempUnit == 'F') val = (val * (9.0 / 5.0)) + 32000;
-    else if (config.tempUnit == 'K') val += 273150;
-
-    return val / 1000;
-}
-
-void get_ptt_status(unsigned char p)
-{
-    unsigned char val;
-
-    if (p > 2)
-    {
-        fprintf(stderr, "PTT can only be 0-2");
-        exit(1);
-    }
-
-    spiTrxByte(0x20 | p);
-    val = spiTrxByte(0xff);
-
-    printf("PTT%d is %sinitialized\n", p, val & 0x01 ? "" : "not ");
-    printf("PTT%d is %sactive\n", p, val & 0x02 ? "" : "not ");
-    printf("PTT%d has %stimed out\n", p, val & 0x04 ? "" : "not ");
-}
-
-float fround(float f, uint digits)
-{
-    if (digits == 0) return round(f);
-    return float(int(f * pow(10, digits) + 0.5)) / pow(10, digits);
-}
-
-void doBeacon()
-{
-    char* text = config.beaconText;
-    int textSz = strlen(text);
-
-    char* zulu = (char*)calloc(1, 8);
-    time_t rawtime;
-    struct tm* timeinfo;
-    time(&rawtime);
-    timeinfo = gmtime(&rawtime);
-    strftime(zulu, 8, "%d%H%Mz", timeinfo);
-
-
-    for (int i=0; i<textSz; i++)
-    {
-        if (text[i] == '|') continue;   // APRS spec says comments cannot contain ~ or |
-        if (text[i] == '~')
-        {
-            int p = text[i+2] - '0';
-            switch (text[i+1])
-            {
-                case 'a':   // Scaled ADC value
-                    printf("%g", fround(read_adc(p, 1), config.adc[p].precision));
-                    i += 2;
-                    break;
-
-                case 'r':   // Raw ADC value
-                    printf("%.0f", read_adc(p, 0));
-                    i += 2;
-                    break;
-
-                case 't':   // Temperature value
-                    printf("%g%c", fround(read_temp(), config.tempPrecision), config.tempUnit);
-                    i += 1;
-                    break;
-
-                case 'z':   // Timestamp
-                    printf(zulu);
-                    i += 1;
-                    break;
-
-                default:
-                    break;
-            }
-        }
-        else putchar(text[i]);
-    }
-    putchar('\n');
-
-    free(zulu);
-}
 
 void show_help(const char* cmdline)
 {
@@ -211,21 +23,21 @@ void show_help(const char* cmdline)
     printf("  -r\t\tRaw ADC output\n");
     printf("  -s <ptt>\tPrint PTT status (0-2)\n");
     printf("  -t\t\tPrint temperature\n");
+    printf("  -x\t\tReset the MCU\n");
     printf("  -v\t\tBe verbose\n");
     printf("\n");
 }
 
 int main(int argc, char **argv)
 {
-    int opt, do_init = 0, adc = -1, stat = -1, printTemp = 0, do_beacon = 0, scaled = 1;
-    unsigned int temp;
+    int opt, do_init = 0, adc = -1, stat = -1, printTemp = 0, do_beacon = 0, scaled = 1, reset = 0;
 
     if (argc == 1)
     {
         show_help(argv[0]);
         return 1;
     }
-    while((opt = getopt(argc, argv, ":vidbtrc:s:a:")) != -1)
+    while((opt = getopt(argc, argv, ":vidbtrxc:s:a:")) != -1)
     {
         switch(opt)
         {
@@ -239,6 +51,7 @@ int main(int argc, char **argv)
                 break;
 
             case 'i':   // Init
+                reset = 1;
                 do_init = 1;
                 break;
 
@@ -266,24 +79,17 @@ int main(int argc, char **argv)
                 scaled = 0;
                 break;
 
+            case 'x':   // Just reset the MCU
+                reset = 1;
+                break;
+
             default:
                 show_help(argv[0]);
                 return 1;
         }
     }
 
-    wiringPiSetup();
-    pinMode(MOSI, OUTPUT);
-    pullUpDnControl(MOSI, PUD_OFF);
-    digitalWrite(MOSI, 0);
-    pinMode(MISO, INPUT);
-    pullUpDnControl(MISO, PUD_OFF);
-    pinMode(CLK, OUTPUT);
-    pullUpDnControl(CLK, PUD_OFF);
-    digitalWrite(CLK, 0);
-    pinMode(RST, OUTPUT);
-    pullUpDnControl(4, PUD_OFF);
-    digitalWrite(RST, 1);
+    initSpi();
 
     if (configFile == NULL)
     {
@@ -298,27 +104,14 @@ int main(int argc, char **argv)
     }
     if (config.tempUnit != 'F' && config.tempUnit != 'K') config.tempUnit = 'C';
 
-    if (do_init) resetMcu();
+    if (reset) resetMcu();
 
-    spiTrxByte(0x02);           // Check for MCU presence
-    temp = spiTrxWord(0xFFFF);
-    if (temp != 0xAA55)
-    {
-        fprintf(stderr, "Error: Invalid magic number (Expected 0xAA55 but read 0x%04X)\n", temp);
-        exit(1);
-    }
-    
-    if (verbose)
-    {
-        spiTrxByte(0x01);
-        temp = spiTrxWord(0xFFFF);
-        printf("Found MCU firmware revision %d\n", temp);
-    }
+    initMcu();
 
     if (do_init) initPtt();
 
     usleep(100000); // Let MCU's SPI counter reset
-    if (do_beacon) doBeacon();
+    if (do_beacon) doBeacon(0);
     if (stat != -1) get_ptt_status(stat);
     if (adc != -1) printf("%g\n", scaled ? fround(read_adc(adc, 1), config.adc[adc].precision) : read_adc(adc, 0));
     if (printTemp) printf("%g%c\n", fround(read_temp(), config.tempPrecision), config.tempUnit);
