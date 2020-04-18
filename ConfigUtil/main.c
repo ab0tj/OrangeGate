@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     if (do_init) initPtt();
 
     usleep(100000); // Let MCU's SPI counter reset
-    if (do_beacon) doBeacon(0);
+    if (do_beacon) doBeacon();
     if (stat != -1) get_ptt_status(stat);
     if (adc != -1) printf("%g\n", scaled ? fround(read_adc(adc, 1), config.adc[adc].precision) : read_adc(adc, 0));
     if (printTemp) printf("%g%c\n", fround(read_temp(), config.tempPrecision), config.tempUnit);

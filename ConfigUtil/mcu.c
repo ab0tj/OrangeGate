@@ -8,6 +8,8 @@
 #define MISO    13
 #define CLK     14
 #define RST     4
+#define PA0     2
+#define PA1     0
 
 extern int verbose, debug;
 extern ConfigStruct config;
@@ -26,6 +28,19 @@ void initSpi()
     pinMode(RST, OUTPUT);
     pullUpDnControl(4, PUD_OFF);
     digitalWrite(RST, 1);
+}
+
+int readGpio(int num)
+{
+    if (num == 0)
+    {
+        return digitalRead(PA0);
+    }
+    else if (num == 1)
+    {
+        return digitalRead(PA1);
+    }
+    else return 0;
 }
 
 unsigned char spiTrxByte(unsigned char b)
@@ -107,6 +122,7 @@ void initPtt()
 float read_adc(unsigned char a, int scale)
 {
     unsigned int val;
+    float retVal;
 
     if (a > 1)
     {
@@ -121,8 +137,14 @@ float read_adc(unsigned char a, int scale)
         val = spiTrxWord(0xFFFF);
     } while (val > 0x3ff);      // Filter invalid results
 
-    if (scale) return val * config.adc[a].scale;
-    return val;
+    if (scale)
+    {
+        retVal = (float)val + config.adc[a].offset;
+        retVal *= config.adc[a].scale;
+    }
+    else retVal = val;
+    
+    return retVal;
 }
 
 void get_ptt_status(unsigned char p)

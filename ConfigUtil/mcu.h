@@ -7,5 +7,6 @@ void resetMcu();
 void initPtt();
 float read_adc(unsigned char a, int scale);
 void get_ptt_status(unsigned char p);
+int readGpio(int num);
 
 #endif

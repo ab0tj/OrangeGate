@@ -16,7 +16,6 @@ typedef struct
 typedef struct
 {
     char* text;
-    unsigned int priority;
     unsigned int frequency;
 } BeaconStruct;
 
@@ -28,6 +27,7 @@ typedef struct
     char tempUnit;
     char* tempFile;
     unsigned int tempPrecision;
+    char* myCall;
 } ConfigStruct;
 
 extern char* configFile;

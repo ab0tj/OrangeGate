@@ -33,10 +33,77 @@ int configHandler(void* user, const char* section, const char* name, const char*
     {
         pconfig->ptt[2].timeout = atoi(value);
     }
-    else if (MATCH("beacon", "text"))
+    else if (MATCH("beacon0", "text"))
     {
         pconfig->beacons[0].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[0].text, value);
+    }
+    else if (MATCH("beacon0", "frequency"))
+    {
+        pconfig->beacons[0].frequency = atoi(value);
+    }
+    else if (MATCH("beacon1", "text"))
+    {
+        pconfig->beacons[1].text = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->beacons[1].text, value);
+    }
+    else if (MATCH("beacon1", "frequency"))
+    {
+        pconfig->beacons[1].frequency = atoi(value);
+    }
+    else if (MATCH("beacon2", "text"))
+    {
+        pconfig->beacons[2].text = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->beacons[2].text, value);
+    }
+    else if (MATCH("beacon2", "frequency"))
+    {
+        pconfig->beacons[2].frequency = atoi(value);
+    }
+    else if (MATCH("beacon3", "text"))
+    {
+        pconfig->beacons[3].text = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->beacons[3].text, value);
+    }
+    else if (MATCH("beacon3", "frequency"))
+    {
+        pconfig->beacons[3].frequency = atoi(value);
+    }
+    else if (MATCH("beacon4", "text"))
+    {
+        pconfig->beacons[4].text = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->beacons[4].text, value);
+    }
+    else if (MATCH("beacon4", "frequency"))
+    {
+        pconfig->beacons[4].frequency = atoi(value);
+    }
+    else if (MATCH("beacon5", "text"))
+    {
+        pconfig->beacons[5].text = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->beacons[5].text, value);
+    }
+    else if (MATCH("beacon5", "frequency"))
+    {
+        pconfig->beacons[5].frequency = atoi(value);
+    }
+    else if (MATCH("beacon6", "text"))
+    {
+        pconfig->beacons[6].text = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->beacons[6].text, value);
+    }
+    else if (MATCH("beacon6", "frequency"))
+    {
+        pconfig->beacons[6].frequency = atoi(value);
+    }
+    else if (MATCH("beacon7", "text"))
+    {
+        pconfig->beacons[7].text = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->beacons[7].text, value);
+    }
+    else if (MATCH("beacon7", "frequency"))
+    {
+        pconfig->beacons[7].frequency = atoi(value);
     }
     else if (MATCH("adc0", "scale"))
     {
@@ -48,7 +115,7 @@ int configHandler(void* user, const char* section, const char* name, const char*
     }
     else if (MATCH("adc0", "offset"))
     {
-        pconfig->adc[0].offset = atoi(value);
+        pconfig->adc[0].offset = atof(value);
     }
     else if (MATCH("adc1", "scale"))
     {
@@ -60,7 +127,7 @@ int configHandler(void* user, const char* section, const char* name, const char*
     }
     else if (MATCH("adc1", "offset"))
     {
-        pconfig->adc[1].offset = atoi(value);
+        pconfig->adc[1].offset = atof(value);
     }
     else if (MATCH("temp", "unit"))
     {
@@ -74,6 +141,11 @@ int configHandler(void* user, const char* section, const char* name, const char*
     else if (MATCH("temp", "precision"))
     {
         pconfig->tempPrecision = atoi(value);
+    }
+    else if (MATCH("station", "mycall"))
+    {
+        pconfig->myCall = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->myCall, value);
     }
     else return 0;
 
