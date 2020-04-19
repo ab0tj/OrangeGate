@@ -139,7 +139,7 @@ void doBeacon()
                     break;
 
                 case 'c':   // Station callsign
-                    printf(config.myCall);
+                    printf("%s", config.myCall);
                     i++;
                     break;
 
@@ -164,7 +164,7 @@ void doBeacon()
                     break;
 
                 case 'z':   // Timestamp
-                    printf(zulu);
+                    printf("%s", zulu);
                     i++;
                     break;
 

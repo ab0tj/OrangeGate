@@ -8,7 +8,7 @@ install: all
 	/usr/bin/install -D --mode=755 orangegate /usr/local/bin/orangegate
 
 orangegate: $(OBJS)
-	$(C) $(OBJS) -lwiringPi -o orangegate
+	$(C) $(OBJS) -lwiringPi -lcrypt -lrt -pthread -o orangegate
 
 main.o: main.c
 	$(C) $(CFLAGS) -o main.o main.c
