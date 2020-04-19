@@ -4,8 +4,8 @@
 #include <wiringPi.h>
 #include "config.h"
 
-#define MOSI    12
-#define MISO    13
+#define MOSI    11
+#define MISO    12
 #define CLK     14
 #define RST     4
 #define PA0     2
