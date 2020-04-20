@@ -7,7 +7,6 @@
 #include "mcu.h"
 
 #define SEQFILE "/tmp/orangegate.seq"
-#define BCNFILE "/tmp/orangegate.bcn"
 
 extern ConfigStruct config;
 
@@ -44,72 +43,9 @@ unsigned int getSeqNum()
     return num;
 }
 
-int pickBeacon()
-{
-    /* Decide which beacon to send based on the last time they were sent, and frequency setting */
-    time_t bcnTimes[8], now;
-    int i, beacon = 0;
-    float oldest, thisOne;
-    size_t result;
-
-    time(&now);
-
-    /* Open the temp file if it exists */
-    FILE* tempFile = fopen(BCNFILE, "rb");
-    if (tempFile != NULL)
-    {
-        /* Read the last beacon times */
-        for (i = 0; i < 8; i++)
-        {
-            result = fread(&bcnTimes[i], sizeof(time_t), 1, tempFile);
-            if (result != 1) bcnTimes[i] = 0;
-        }
-
-        fclose(tempFile);
-    }
-    else
-    {
-        /* Set them all to 0 if the temp file wasn't there */
-        for (i = 0; i < 8; i++) bcnTimes[i] = 0;
-    }
-
-    for (i = 7; i >= 0; i--)
-    {
-        /* Pick the next beacon, go backwards through the list to give lower numbered beacons priority */
-        /* Skip if frequency is set to zero (probably not initialized) */
-        if (config.beacons[i].frequency == 0) continue;
-
-        thisOne = (float)(now - bcnTimes[i]) / (float)config.beacons[i].frequency;
-        if (thisOne >= oldest)
-        {
-            oldest = thisOne;
-            beacon = i;
-        }
-    }
-    /* Set the beacon time for the one we picked */
-    bcnTimes[beacon] = now;
-
-    /* Write out the new values to the temp file */
-    tempFile = fopen(BCNFILE, "wb");
-    if (tempFile == NULL)
-    {
-        fprintf(stderr, "Could not open %s for writing!", BCNFILE);
-        exit(1);
-    }
-
-    for (i = 0; i < 8; i++)
-    {
-        fwrite(&bcnTimes[i], sizeof(time_t), 1, tempFile);
-    }
-    fclose(tempFile);
-
-    return beacon;
-}
-
-void doBeacon()
+void doBeacon(unsigned int num)
 {
     /* Generate a beacon string */
-    unsigned int num = pickBeacon();
     char* text = config.beacons[num].text;
     int textSz = strlen(text);
 

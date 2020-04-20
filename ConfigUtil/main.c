@@ -16,7 +16,7 @@ void show_help(const char* cmdline)
 {
     printf("Usage: %s [-abcdisv]\n", cmdline);
     printf("  -a <adc>\tRead ADC 0 or 1\n");
-    printf("  -b\t\tGenerate APRS beacon string\n");
+    printf("  -b <num>\tGenerate APRS beacon string\n");
     printf("  -c\t\tSpecify config file (default is /etc/orangegate.conf)\n");
     printf("  -d\t\tDebug: Print SPI transfers\n");
     printf("  -i\t\tInitialize the MCU\n");
@@ -30,14 +30,14 @@ void show_help(const char* cmdline)
 
 int main(int argc, char **argv)
 {
-    int opt, do_init = 0, adc = -1, stat = -1, printTemp = 0, do_beacon = 0, scaled = 1, reset = 0;
+    int opt, do_init = 0, adc = -1, stat = -1, printTemp = 0, do_beacon = -1, scaled = 1, reset = 0;
 
     if (argc == 1)
     {
         show_help(argv[0]);
         return 1;
     }
-    while((opt = getopt(argc, argv, ":vidbtrxc:s:a:")) != -1)
+    while((opt = getopt(argc, argv, ":vidb:trxc:s:a:")) != -1)
     {
         switch(opt)
         {
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
                 break;
 
             case 'b':   // Generate an APRS status beacon string
-                do_beacon = 1;
+                do_beacon = atoi(optarg);
                 break;
 
             case 'c':   // Use a different config file
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     if (do_init) initPtt();
 
     usleep(100000); // Let MCU's SPI counter reset
-    if (do_beacon) doBeacon();
+    if (do_beacon != -1) doBeacon(do_beacon);
     if (stat != -1) get_ptt_status(stat);
     if (adc != -1) printf("%g\n", scaled ? fround(read_adc(adc, 1), config.adc[adc].precision) : read_adc(adc, 0));
     if (printTemp) printf("%g%c\n", fround(read_temp(), config.tempPrecision), config.tempUnit);
