@@ -46,8 +46,8 @@ unsigned int getSeqNum()
 void doBeacon(unsigned int num)
 {
     /* Generate a beacon string */
-    char* text = config.beacons[num].text;
-    int textSz = strlen(text);
+    char* text;
+    int textSz;
 
     char* zulu = (char*)calloc(1, 8);
     time_t rawtime;
@@ -55,6 +55,14 @@ void doBeacon(unsigned int num)
     time(&rawtime);
     timeinfo = gmtime(&rawtime);
     strftime(zulu, 8, "%d%H%Mz", timeinfo);
+
+    if (config.beacons[num].text == NULL)
+    {
+        fprintf(stderr, "Beacon %d not defined!\n", num);
+        exit(1);
+    }
+    text = config.beacons[num].text;
+    textSz = strlen(text);
 
     /* Look through the beacon string and make substitutions */
     for (int i=0; i<textSz; i++)
