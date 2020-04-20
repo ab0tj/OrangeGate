@@ -16,7 +16,6 @@ typedef struct
 typedef struct
 {
     char* text;
-    unsigned int frequency;
 } BeaconStruct;
 
 typedef struct

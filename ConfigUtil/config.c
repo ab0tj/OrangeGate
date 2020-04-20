@@ -33,77 +33,45 @@ int configHandler(void* user, const char* section, const char* name, const char*
     {
         pconfig->ptt[2].timeout = atoi(value);
     }
-    else if (MATCH("beacon0", "text"))
+    else if (MATCH("beacon", "text0"))
     {
         pconfig->beacons[0].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[0].text, value);
     }
-    else if (MATCH("beacon0", "frequency"))
-    {
-        pconfig->beacons[0].frequency = atoi(value);
-    }
-    else if (MATCH("beacon1", "text"))
+    else if (MATCH("beacon", "text1"))
     {
         pconfig->beacons[1].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[1].text, value);
     }
-    else if (MATCH("beacon1", "frequency"))
-    {
-        pconfig->beacons[1].frequency = atoi(value);
-    }
-    else if (MATCH("beacon2", "text"))
+    else if (MATCH("beacon", "text2"))
     {
         pconfig->beacons[2].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[2].text, value);
     }
-    else if (MATCH("beacon2", "frequency"))
-    {
-        pconfig->beacons[2].frequency = atoi(value);
-    }
-    else if (MATCH("beacon3", "text"))
+    else if (MATCH("beacon", "text3"))
     {
         pconfig->beacons[3].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[3].text, value);
     }
-    else if (MATCH("beacon3", "frequency"))
-    {
-        pconfig->beacons[3].frequency = atoi(value);
-    }
-    else if (MATCH("beacon4", "text"))
+    else if (MATCH("beacon", "text4"))
     {
         pconfig->beacons[4].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[4].text, value);
     }
-    else if (MATCH("beacon4", "frequency"))
-    {
-        pconfig->beacons[4].frequency = atoi(value);
-    }
-    else if (MATCH("beacon5", "text"))
+    else if (MATCH("beacon", "text5"))
     {
         pconfig->beacons[5].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[5].text, value);
     }
-    else if (MATCH("beacon5", "frequency"))
-    {
-        pconfig->beacons[5].frequency = atoi(value);
-    }
-    else if (MATCH("beacon6", "text"))
+    else if (MATCH("beacon", "text6"))
     {
         pconfig->beacons[6].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[6].text, value);
     }
-    else if (MATCH("beacon6", "frequency"))
-    {
-        pconfig->beacons[6].frequency = atoi(value);
-    }
-    else if (MATCH("beacon7", "text"))
+    else if (MATCH("beacon", "text7"))
     {
         pconfig->beacons[7].text = (char*)malloc(strlen(value) + 1);
         strcpy(pconfig->beacons[7].text, value);
-    }
-    else if (MATCH("beacon7", "frequency"))
-    {
-        pconfig->beacons[7].frequency = atoi(value);
     }
     else if (MATCH("adc0", "scale"))
     {
