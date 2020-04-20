@@ -7,9 +7,9 @@
 #define MOSI    11
 #define MISO    12
 #define CLK     14
-#define RST     4
-#define PA0     2
-#define PA1     0
+#define RST     9
+#define PA0     7
+#define PA1     5
 
 extern int verbose, debug;
 extern ConfigStruct config;
