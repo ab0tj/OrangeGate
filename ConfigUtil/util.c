@@ -3,6 +3,7 @@
 #include <math.h>
 #include <errno.h>
 #include "config.h"
+#include "mcu.h"
 
 extern ConfigStruct config;
 
@@ -39,4 +40,47 @@ float read_temp()
     else if (config.tempUnit == 'K') val += 273150;
 
     return val / 1000;
+}
+
+float read_adc_file(int num, int scale)
+{
+    float val;
+    long size;
+    char* buff;
+    FILE *fp = fopen(config.adc[num].fileName, "r");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "Error opening ADC file: %d\n", errno);
+        exit(1);
+    }
+
+    fseek(fp, 0, SEEK_END);
+    size = ftell(fp);
+    rewind(fp);
+
+    buff = (char*)calloc(1, size + 1);
+    fread(buff, size, 1, fp);
+    fclose(fp);
+
+    val = atoi(buff);
+    free(buff);
+
+    if (scale)
+    {
+        val += config.adc[num].offset;
+        val *= config.adc[num].scale;
+    }
+
+    return val;
+}
+
+float read_adc(int num, int scale)
+{
+    if (num < 2) return read_adc_mcu(num, scale);
+    else if (num < 4) return read_adc_file(num, scale);
+    else
+    {
+        fprintf(stderr, "ADC number must be 0-3.\n");
+        exit(1);
+    }
 }

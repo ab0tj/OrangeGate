@@ -119,16 +119,10 @@ void initPtt()
     }
 }
 
-float read_adc(unsigned char a, int scale)
+float read_adc_mcu(int a, int scale)
 {
     unsigned int val;
     float retVal;
-
-    if (a > 1)
-    {
-        fprintf(stderr, "ADC can only be 0 or 1.\n");
-        exit(1);
-    }
 
     do
     {

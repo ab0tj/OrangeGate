@@ -97,6 +97,40 @@ int configHandler(void* user, const char* section, const char* name, const char*
     {
         pconfig->adc[1].offset = atof(value);
     }
+    else if (MATCH("adc2", "scale"))
+    {
+        pconfig->adc[2].scale = atof(value);
+    }
+    else if (MATCH("adc2", "precision"))
+    {
+        pconfig->adc[2].precision = atoi(value);
+    }
+    else if (MATCH("adc2", "offset"))
+    {
+        pconfig->adc[2].offset = atof(value);
+    }
+    else if (MATCH("adc2", "file"))
+    {
+        pconfig->adc[2].fileName = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->adc[2].fileName, value);
+    }
+    else if (MATCH("adc3", "scale"))
+    {
+        pconfig->adc[1].scale = atof(value);
+    }
+    else if (MATCH("adc3", "precision"))
+    {
+        pconfig->adc[1].precision = atoi(value);
+    }
+    else if (MATCH("adc3", "offset"))
+    {
+        pconfig->adc[1].offset = atof(value);
+    }
+    else if (MATCH("adc3", "file"))
+    {
+        pconfig->adc[3].fileName = (char*)malloc(strlen(value) + 1);
+        strcpy(pconfig->adc[3].fileName, value);
+    }
     else if (MATCH("temp", "unit"))
     {
         pconfig->tempUnit = value[0];

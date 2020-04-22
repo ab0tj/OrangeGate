@@ -11,6 +11,7 @@ typedef struct
     float scale;
     float offset;
     unsigned int precision;
+    char* fileName;
 } AdcStruct;
 
 typedef struct
@@ -22,7 +23,7 @@ typedef struct
 {
     PttConfig ptt[3];
     BeaconStruct beacons[8];
-    AdcStruct adc[2];
+    AdcStruct adc[4];
     char tempUnit;
     char* tempFile;
     unsigned int tempPrecision;

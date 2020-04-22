@@ -97,6 +97,11 @@ void doBeacon(unsigned int num)
                     i += 2;
                     break;
 
+                case 'p':   // Ping 8.8.8.8 and insert 1 for good, 0 for bad
+                    printf("%d", !(system("ping -c1 8.8.8.8 > /dev/null")));
+                    i++;
+                    break;
+
                 case 's':   // Sequence number
                     printf("%03d", getSeqNum());
                     i++;

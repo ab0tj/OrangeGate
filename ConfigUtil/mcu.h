@@ -5,7 +5,7 @@ void initSpi();
 void initMcu();
 void resetMcu();
 void initPtt();
-float read_adc(unsigned char a, int scale);
+float read_adc_mcu(int a, int scale);
 void get_ptt_status(unsigned char p);
 int readGpio(int num);
 
