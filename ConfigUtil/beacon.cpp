@@ -12,10 +12,10 @@ extern ConfigStruct config;
 
 unsigned int getSeqNum()
 {
-    /* Return the next sequence number, or 0 if we don't know the last one */
+    /* Return the next sequence number, or make one up if we don't know the last one */
     char buffer;
     size_t result;
-    unsigned int num = 0;
+    unsigned int num = rand() % 256;
 
     /* Open temp file */
     FILE* tempFile = fopen(SEQFILE, "rb");
