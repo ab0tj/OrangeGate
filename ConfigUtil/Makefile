@@ -10,20 +10,20 @@ install: all
 orangegate: $(OBJS)
 	$(C) $(OBJS) -lwiringPi -lcrypt -lrt -pthread -o orangegate
 
-main.o: main.c
-	$(C) $(CFLAGS) -o main.o main.c
+main.o: main.cpp
+	$(C) $(CFLAGS) -o main.o main.cpp
 
-config.o: config.c
-	$(C) $(CFLAGS) -o config.o config.c
+config.o: config.cpp
+	$(C) $(CFLAGS) -o config.o config.cpp
 
-mcu.o: mcu.c
-	$(C) $(CFLAGS) -o mcu.o mcu.c
+mcu.o: mcu.cpp
+	$(C) $(CFLAGS) -o mcu.o mcu.cpp
 
-beacon.o: beacon.c
-	$(C) $(CFLAGS) -o beacon.o beacon.c
+beacon.o: beacon.cpp
+	$(C) $(CFLAGS) -o beacon.o beacon.cpp
 
-util.o: util.c
-	$(C) $(CFLAGS) -o util.o util.c
+util.o: util.cpp
+	$(C) $(CFLAGS) -o util.o util.cpp
 
 clean:
 	rm -f orangegate $(OBJS)
